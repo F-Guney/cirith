@@ -1,0 +1,22 @@
+server:
+  port: 3000
+  timeout_seconds: 30
+
+database:
+  url: "sqlite:data/cirith.db?mode=rwc"
+
+rate_limit:
+  max_requests: 100
+  window_secs: 60
+
+auth:
+  enabled: true
+  api_keys:
+    - name: "test-client"
+      key_hash: "2ceac6f36363c6246a64cca805cd43ca7a01b14eb2fcc532ceec3f60f2f7df1c"
+
+routes:
+  - path: "/api"
+    upstream: "https://httpbin.org"
+  - path: "/api/v2"
+    upstream: "https://jsonplaceholder.typicode.com"
