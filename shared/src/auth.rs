@@ -31,7 +31,7 @@ impl AuthValidator {
     }
 }
 
-fn hash_key(key: &str) -> String {
+pub fn hash_key(key: &str) -> String {
     let mut hasher = Sha256::new();
     hasher.update(key.as_bytes());
     let result = hasher.finalize();
