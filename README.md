@@ -4,41 +4,66 @@ Lightweight API Gateway written in Rust.
 
 ## Features
 
-- **Reverse Proxy** — Route requests to multiple upstreams
+- **Reverse Proxy** — Route requests to multiple upstreams (Pingora-based)
 - **Rate Limiting** — IP-based sliding window algorithm
 - **Authentication** — API key with SHA256 hashing
 - **Admin API** — REST API for routes and keys management
 - **Metrics** — Request counters endpoint
 - **SQLite Storage** — Persistent routes and API keys
 
-## Quick Start
+## Architecture
 
-### Using Docker
-```bash
-docker run -d \
-  --name cirith \
-  -p 3000:3000 \
-  -v $(pwd)/config.yaml:/app/config.yaml \
-  -v $(pwd)/data:/app/data \
-  cirith:latest
+```
+                    ┌─────────────────────┐
+                    │      Clients        │
+                    └──────────┬──────────┘
+                               │
+              ┌────────────────┼────────────────┐
+              │                │                │
+              ▼                ▼                ▼
+       ┌─────────────┐  ┌─────────────┐  ┌─────────────┐
+       │   Gateway   │  │   Admin     │  │   Admin     │
+       │   :6191     │  │   :3000     │  │   :3000     │
+       │  (Pingora)  │  │   (Axum)    │  │   (Axum)    │
+       └──────┬──────┘  └──────┬──────┘  └─────────────┘
+              │                │
+              │                ▼
+              │         ┌─────────────┐
+              │         │   SQLite    │
+              │         └─────────────┘
+              ▼
+       ┌─────────────┐
+       │  Upstreams  │
+       └─────────────┘
 ```
 
+## Quick Start
+
 ### From Source
+
 ```bash
 # Clone
 git clone https://github.com/F-Guney/cirith.git
 cd cirith
 
-# Build
-cargo build --release
+# Build all
+cargo build --workspace --release
 
-# Run
-./target/release/cirith
+# Run Gateway (port 6191)
+cargo run -p cirith-gateway
+
+# Run Admin API (port 3000) - separate terminal
+cargo run -p cirith-admin
 ```
+
+### Using Docker
+
+> Docker setup is being updated for the new workspace structure.
 
 ## Configuration
 
 Create `config.yaml`:
+
 ```yaml
 server:
   port: 3000
@@ -59,34 +84,47 @@ auth:
 
 routes:
   - path: "/api"
-    upstream: "https://httpbin.org"
+    upstream: "http://httpbin.org"
+  - path: "/api/v2"
+    upstream: "http://jsonplaceholder.typicode.com"
 ```
 
 Generate API key hash:
+
 ```bash
 echo -n "your-secret-key" | sha256sum
 ```
 
 ## API Endpoints
 
-### Proxy
+### Gateway (port 6191)
 
-All requests (except admin) are proxied based on route config.
+Proxy requests based on route config:
+
 ```bash
-curl -H "x-api-key: your-secret-key" http://localhost:3000/api/get
+# Route to httpbin.org
+curl http://localhost:6191/api/get
+
+# Route to jsonplaceholder
+curl http://localhost:6191/api/v2/posts/1
 ```
 
-### Health Check
+### Admin API (port 3000)
+
+#### Health Check
+
 ```bash
 curl http://localhost:3000/health
 ```
 
-### Metrics
+#### Metrics
+
 ```bash
 curl http://localhost:3000/metrics
 ```
 
-### Admin API
+#### Routes Management
+
 ```bash
 # List routes
 curl http://localhost:3000/admin/routes
@@ -94,11 +132,15 @@ curl http://localhost:3000/admin/routes
 # Add route
 curl -X POST http://localhost:3000/admin/routes \
   -H "Content-Type: application/json" \
-  -d '{"path": "/test", "upstream": "https://example.com"}'
+  -d '{"path": "/test", "upstream": "http://example.com"}'
 
 # Delete route
 curl -X DELETE http://localhost:3000/admin/routes/test
+```
 
+#### API Keys Management
+
+```bash
 # List API keys
 curl http://localhost:3000/admin/keys
 
@@ -111,34 +153,32 @@ curl -X POST http://localhost:3000/admin/keys \
 curl -X DELETE http://localhost:3000/admin/keys/new-app
 ```
 
-## Architecture
+## Project Structure
+
 ```
-Client Request
-      │
-      ▼
-┌─────────────┐
-│   Cirith    │
-│  Gateway    │
-├─────────────┤
-│ Auth Check  │
-│ Rate Limit  │
-│ Route Match │
-└──────┬──────┘
-       │
-       ▼
-   Upstream
+cirith/
+├── Cargo.toml          # Workspace root
+├── config.yaml         # Configuration
+├── shared/             # Common code (config, storage, auth)
+├── admin/              # Admin API (Axum)
+└── gateway/            # Reverse Proxy (Pingora)
 ```
 
 ## Tech Stack
 
 - **Rust** — Memory safe, high performance
-- **Axum** — Web framework
+- **Pingora** — High-performance proxy framework (by Cloudflare)
+- **Axum** — Web framework for Admin API
 - **SQLite** — Persistent storage
 - **Tokio** — Async runtime
 
 ## Roadmap
 
-- [ ] Pingora migration (high-performance proxy)
+- [x] Pingora-based gateway
+- [x] Config-driven routing
+- [ ] Rate limiting (Gateway)
+- [ ] Authentication (Gateway)
+- [ ] HTTPS upstream support
 - [ ] Dashboard UI
 - [ ] Redis rate limiting
 - [ ] JWT authentication
