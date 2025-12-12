@@ -26,7 +26,7 @@ async fn main() {
         .init();
 
     let config = Config::load("config.yml").expect("Failed to load config.yml");
-    let port = config.server.port;
+    let port = config.server.admin_port;
     tracing::info!("Loaded {} routes", config.routes.len());
 
     let database = Arc::new(

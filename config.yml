@@ -1,5 +1,6 @@
 server:
-  port: 6191
+  admin_port: 3000
+  gateway_port: 6191
   timeout_seconds: 30
 
 database:

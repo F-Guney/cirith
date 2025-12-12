@@ -5,15 +5,23 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     pkg-config \
     libssl-dev \
+    perl \
+    make \
+    cmake \
+    g++ \
     && rm -rf /var/lib/apt/lists/*
 
 COPY Cargo.toml Cargo.lock ./
 
-COPY src ./src
+COPY shared ./shared
 
-RUN cargo build --release
+COPY admin ./admin
 
-FROM debian:bookworm-slim
+COPY gateway ./gateway
+
+RUN cargo build --workspace --release
+
+FROM debian:trixie-slim
 
 WORKDIR /app
 
@@ -22,12 +30,12 @@ RUN apt-get update && apt-get install -y \
     libssl3 \
     && rm -rf /var/lib/apt/lists/*
 
-COPY --from=builder /app/target/release/cirith /app/cirith
+COPY --from=builder /app/target/release/cirith-admin /app/cirith-admin
+
+COPY --from=builder /app/target/release/cirith-gateway /app/cirith-gateway
 
 RUN mkdir -p /app/data
 
 COPY config.yml /app/config.yml
 
-EXPOSE 3000
-
-CMD ["./cirith"]
+EXPOSE 3000 6191

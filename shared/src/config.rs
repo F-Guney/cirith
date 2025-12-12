@@ -12,7 +12,8 @@ pub struct Config {
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct ServerConfig {
-    pub port: u16,
+    pub admin_port: u16,
+    pub gateway_port: u16,
     #[serde(default = "default_timeout")]
     pub timeout_seconds: u64,
 }

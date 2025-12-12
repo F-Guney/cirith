@@ -1,0 +1,17 @@
+services:
+  admin:
+    build: .
+    command: ./cirith-admin
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./config.yml:/app/config.yml
+      - ./data:/app/data
+  gateway:
+    build: .
+    command: ./cirith-gateway
+    ports:
+      - "6191:6191"
+    volumes:
+      - ./config.yml:/app/config.yml
+      - ./data:/app/data

@@ -147,7 +147,7 @@ fn main() {
     tracing::info!("Starting Cirith Gateway...");
 
     let config = Config::load("config.yml").expect("Failed to load config");
-    let port = config.server.port;
+    let port = config.server.gateway_port;
     tracing::info!("Loaded {} routes", config.routes.len());
 
     let mut server = Server::new(None).unwrap();
