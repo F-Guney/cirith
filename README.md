@@ -56,9 +56,16 @@ cargo run -p cirith-gateway
 cargo run -p cirith-admin
 ```
 
-### Using Docker
+### Using Docker Compose
 
-> Docker setup is being updated for the new workspace structure.
+```bash
+docker-compose up --build
+```
+
+Services:
+
+- Admin API: http://localhost:3000
+- Gateway: http://localhost:6191
 
 ## Configuration
 
@@ -176,9 +183,9 @@ cirith/
 
 - [x] Pingora-based gateway
 - [x] Config-driven routing
-- [ ] Rate limiting (Gateway)
-- [ ] Authentication (Gateway)
-- [ ] HTTPS upstream support
+- [x] Rate limiting (Gateway)
+- [x] Authentication (Gateway)
+- [x] HTTPS upstream support
 - [ ] Dashboard UI
 - [ ] Redis rate limiting
 - [ ] JWT authentication
