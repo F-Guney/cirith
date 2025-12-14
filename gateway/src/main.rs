@@ -63,6 +63,21 @@ impl ProxyHttp for CirithGateway {
     where
         Self::CTX: Send + Sync,
     {
+        let path = session.req_header().uri.path();
+        if path == "/health" {
+            let header = ResponseHeader::build(200, None)?;
+            session.set_keepalive(None);
+            session
+                .write_response_header(Box::new(header), false)
+                .await?;
+
+            session
+                .write_response_body(Some("OK".into()), true)
+                .await?;
+
+            return Ok(true);
+        }
+
         if self.auth_validator.is_enabled() {
             let api_key = session
                 .req_header()
