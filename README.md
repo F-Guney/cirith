@@ -4,12 +4,12 @@ Lightweight API Gateway written in Rust.
 
 ## Features
 
-- **Reverse Proxy** — Route requests to multiple upstreams (Pingora-based)
-- **Rate Limiting** — IP-based sliding window algorithm
+- **Reverse Proxy** — Pingora-based high-performance proxy
+- **Dynamic Routing** — SQLite-backed, manage via Admin API
 - **Authentication** — API key with SHA256 hashing
-- **Admin API** — REST API for routes and keys management
-- **Metrics** — Request counters endpoint
-- **SQLite Storage** — Persistent routes and API keys
+- **Rate Limiting** — IP-based sliding window
+- **SSRF Protection** — Blocks private IPs, restricted hosts
+- **Docker Ready** — Multi-service docker-compose
 
 ## Architecture
 
@@ -73,27 +73,21 @@ Create `config.yaml`:
 
 ```yaml
 server:
-  port: 3000
-  timeout_seconds: 30
+  admin_port: 3000
+  gateway_port: 6191
 
 database:
-  url: "sqlite:data/cirith.db?mode=rwc"
-
-rate_limit:
-  max_requests: 100
-  window_secs: 60
+  url: "data/cirith.db"
 
 auth:
   enabled: true
-  api_keys:
-    - name: "my-app"
-      key_hash: "YOUR_SHA256_HASH"
+  keys:
+    - name: "default"
+      key_hash: "sha256-hash-here"
 
-routes:
-  - path: "/api"
-    upstream: "http://httpbin.org"
-  - path: "/api/v2"
-    upstream: "http://jsonplaceholder.typicode.com"
+rate_limit:
+  max_requests: 100
+  window_seconds: 60
 ```
 
 Generate API key hash:
@@ -103,6 +97,25 @@ echo -n "your-secret-key" | sha256sum
 ```
 
 ## API Endpoints
+
+## Admin API
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | /health | Health check |
+| GET | /admin/routes | List routes |
+| POST | /admin/routes | Create route |
+| DELETE | /admin/routes/:path | Delete route |
+| GET | /admin/keys | List API keys |
+| POST | /admin/keys | Create API key |
+| DELETE | /admin/keys/:id | Delete API key |
+
+## Gateway
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | /health | Health check |
+| * | /* | Proxy to upstream |
 
 ### Gateway (port 6191)
 

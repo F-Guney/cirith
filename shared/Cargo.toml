@@ -11,3 +11,4 @@ sqlx = {version = "0.8", features = ["runtime-tokio", "sqlite"]}
 sha2 = "0.10"
 thiserror = "2"
 tracing = "0.1"
+url = "2.5.7"

@@ -8,6 +8,7 @@ use serde::Deserialize;
 use std::sync::Arc;
 // module imports
 use crate::state::AdminState;
+use cirith_shared::validation::{validate_path, validate_upstream_url};
 
 #[derive(Debug, Deserialize)]
 pub struct CreateRouteRequest {
@@ -31,6 +32,14 @@ pub async fn create_route(
     State(state): State<Arc<AdminState>>,
     Json(payload): Json<CreateRouteRequest>,
 ) -> Result<impl IntoResponse, StatusCode> {
+    if let Err(_) = validate_upstream_url(&payload.upstream) {
+        return Err(StatusCode::BAD_REQUEST);
+    }
+
+    if let Err(_) = validate_path(payload.path.as_str()) {
+        return Err(StatusCode::BAD_REQUEST);
+    }
+
     let route = state
         .database
         .add_route(&payload.path, &payload.upstream)
