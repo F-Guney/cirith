@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 cirith-shared = { path = "../shared" }
+tokio = { version = "1", features = ["rt"] }
 async-trait = "0.1"
 pingora = { version = "0.6", features = ["openssl"] }
 pingora-proxy = "0.6"

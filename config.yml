@@ -15,9 +15,3 @@ auth:
   api_keys:
     - name: "test-client"
       key_hash: "2ceac6f36363c6246a64cca805cd43ca7a01b14eb2fcc532ceec3f60f2f7df1c"
-
-routes:
-  - path: "/api"
-    upstream: "https://httpbin.org"
-  - path: "/api/v2"
-    upstream: "https://jsonplaceholder.typicode.com"

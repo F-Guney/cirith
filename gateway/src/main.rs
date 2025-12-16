@@ -8,12 +8,14 @@ use pingora::upstreams::peer::HttpPeer;
 use pingora_proxy::{ProxyHttp, Session};
 // imports
 use crate::rate_limit::RateLimiter;
+use cirith_shared::storage::{Database, DbRoute};
 use cirith_shared::{auth::AuthValidator, config::Config};
 
 struct CirithGateway {
     config: Config,
     rate_limit: RateLimiter,
     auth_validator: AuthValidator,
+    routes: Vec<DbRoute>,
 }
 
 #[async_trait]
@@ -31,7 +33,6 @@ impl ProxyHttp for CirithGateway {
     ) -> Result<Box<HttpPeer>> {
         let path = session.req_header().uri.path();
         let route = self
-            .config
             .routes
             .iter()
             .filter(|r| path.starts_with(&r.path))
@@ -71,9 +72,7 @@ impl ProxyHttp for CirithGateway {
                 .write_response_header(Box::new(header), false)
                 .await?;
 
-            session
-                .write_response_body(Some("OK".into()), true)
-                .await?;
+            session.write_response_body(Some("OK".into()), true).await?;
 
             return Ok(true);
         }
@@ -163,7 +162,6 @@ fn main() {
 
     let config = Config::load("config.yml").expect("Failed to load config");
     let port = config.server.gateway_port;
-    tracing::info!("Loaded {} routes", config.routes.len());
 
     let mut server = Server::new(None).unwrap();
     server.bootstrap();
@@ -173,11 +171,20 @@ fn main() {
         config.rate_limit.window_secs,
     );
 
+    let rt = tokio::runtime::Runtime::new().unwrap();
+    let routes = rt
+        .block_on(async {
+            let database = Database::new(&config.database.url).await?;
+            database.get_routes().await
+        })
+        .unwrap();
+
     let auth_validator = AuthValidator::new(&config.auth);
     let gateway = CirithGateway {
         config,
         rate_limit,
         auth_validator,
+        routes,
     };
 
     let mut proxy = pingora_proxy::http_proxy_service(&server.configuration, gateway);

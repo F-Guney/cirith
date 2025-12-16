@@ -6,8 +6,6 @@ pub struct Config {
     pub database: DatabaseConfig,
     pub rate_limit: RateLimitConfig,
     pub auth: AuthConfig,
-    #[serde(default)]
-    pub routes: Vec<Route>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -44,12 +42,6 @@ pub struct AuthConfig {
 pub struct ApiKey {
     pub name: String,
     pub key_hash: String,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-pub struct Route {
-    pub path: String,
-    pub upstream: String,
 }
 
 impl Config {
