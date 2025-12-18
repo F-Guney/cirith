@@ -1,9 +1,11 @@
 mod handlers;
 mod metrics;
+mod middleware;
 mod state;
 
 use axum::{
     Router,
+    middleware::from_fn_with_state,
     routing::{delete, get, post},
 };
 use std::net::SocketAddr;
@@ -43,8 +45,9 @@ async fn main() {
         auth_validator,
     });
 
-    let app = Router::new()
-        .route("/health", get(health_check))
+    let public_routes = Router::new().route("/health", get(health_check));
+
+    let protected_routes = Router::new()
         .route("/metrics", get(metrics_handler))
         .route("/admin/routes", get(list_routes))
         .route("/admin/routes", post(create_route))
@@ -52,6 +55,14 @@ async fn main() {
         .route("/admin/keys", get(list_api_keys))
         .route("/admin/keys", post(create_api_key))
         .route("/admin/keys/{name}", delete(delete_api_key))
+        .layer(from_fn_with_state(
+            state.clone(),
+            middleware::auth_middleware,
+        ));
+
+    let app = Router::new()
+        .merge(public_routes)
+        .merge(protected_routes)
         .with_state(state);
 
     let addr = SocketAddr::from(([0, 0, 0, 0], port));

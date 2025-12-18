@@ -3,6 +3,9 @@ server:
   gateway_port: 6191
   timeout_seconds: 30
 
+admin:
+  token: "my-secret-token"
+
 database:
   url: "sqlite:data/cirith.db?mode=rwc"
 

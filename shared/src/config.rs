@@ -6,6 +6,7 @@ pub struct Config {
     pub database: DatabaseConfig,
     pub rate_limit: RateLimitConfig,
     pub auth: AuthConfig,
+    pub admin: AdminConfig,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -36,6 +37,11 @@ pub struct AuthConfig {
     pub enabled: bool,
     #[serde(default)]
     pub api_keys: Vec<ApiKey>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct AdminConfig {
+    pub token: String,
 }
 
 #[derive(Debug, Clone, Deserialize)]
