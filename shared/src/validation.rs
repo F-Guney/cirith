@@ -64,3 +64,29 @@ pub fn validate_upstream_url(upstream: &str) -> Result<(), String> {
         _ => Err(format!("Invalid scheme: {}", upstream_url)),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_validate_upstream_url() {
+        assert!(validate_upstream_url("https://google.com").is_ok());
+        assert!(validate_upstream_url("http://google.com").is_ok());
+        assert!(validate_upstream_url("http://10.0.0.1").is_err());
+        assert!(validate_upstream_url("http://172.16.0.1").is_err());
+        assert!(validate_upstream_url("http://169.254.1.1").is_err());
+        assert!(validate_upstream_url("http://LOCALHOST").is_err());
+        assert!(validate_upstream_url("http://test.localhost").is_err());
+        assert!(validate_upstream_url("ftp://google.com").is_err());
+    }
+
+    #[test]
+    fn test_validate_path() {
+        assert!(validate_path("/").is_ok());
+        assert!(validate_path("/abc").is_ok());
+        assert!(validate_path("").is_err());
+        assert!(validate_path("no-slash").is_err());
+        assert!(validate_path("/a/../b").is_err());
+    }
+}

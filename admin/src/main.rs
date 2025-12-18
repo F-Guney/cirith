@@ -1,24 +1,8 @@
-mod handlers;
-mod metrics;
-mod middleware;
-mod state;
-
-use axum::{
-    Router,
-    middleware::from_fn_with_state,
-    routing::{delete, get, post},
-};
 use std::net::SocketAddr;
 use std::sync::Arc;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 // Imports
-use crate::handlers::{
-    health::{health_check, metrics_handler},
-    keys::{create_api_key, delete_api_key, list_api_keys},
-    routes::{create_route, delete_route, list_routes},
-};
-use crate::metrics::Metrics;
-use crate::state::AdminState;
+use cirith_admin::{create_app, metrics::Metrics, state::AdminState};
 use cirith_shared::{auth::AuthValidator, config::Config, storage::Database};
 
 #[tokio::main]
@@ -45,26 +29,7 @@ async fn main() {
         auth_validator,
     });
 
-    let public_routes = Router::new().route("/health", get(health_check));
-
-    let protected_routes = Router::new()
-        .route("/metrics", get(metrics_handler))
-        .route("/admin/routes", get(list_routes))
-        .route("/admin/routes", post(create_route))
-        .route("/admin/routes/{*path}", delete(delete_route))
-        .route("/admin/keys", get(list_api_keys))
-        .route("/admin/keys", post(create_api_key))
-        .route("/admin/keys/{name}", delete(delete_api_key))
-        .layer(from_fn_with_state(
-            state.clone(),
-            middleware::auth_middleware,
-        ));
-
-    let app = Router::new()
-        .merge(public_routes)
-        .merge(protected_routes)
-        .with_state(state);
-
+    let app = create_app(state);
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
     tracing::info!("Listening on {}", addr);
 
